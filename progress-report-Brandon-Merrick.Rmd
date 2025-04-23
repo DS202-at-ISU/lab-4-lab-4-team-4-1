@@ -3,3 +3,47 @@ title: "progress-report-Brandon-Merrick"
 output: html_document
 ---
 
+```{r}
+library(rvest)
+url <- "https://www.baseball-reference.com/awards/hof_2025.shtml"
+html <- read_html(url)
+tables <- html %>% html_table(fill = TRUE)
+induction <- tables[[1]]
+colnames(induction) <- as.character(unlist(induction[1, ]))
+induction <- induction[-1, ]
+
+names(induction)[13] <- "Batting G"
+names(induction)[31] <- "Pitching G"
+names(induction)[16] <- "Batting H"
+names(induction)[35] <- "Pitching H"
+names(induction)[17] <- "Batting HR"
+names(induction)[36] <- "Pitching HR"
+names(induction)[20] <- "Batting BB"
+names(induction)[37] <- "Pitching BB"
+
+HallOfFame <- Lahman::HallOfFame
+HallOfFame %>% 
+  ggplot(aes(x = yearID, fill = inducted)) +
+  geom_bar() +
+  xlim(c(1936, 2024))
+
+induction$`%vote` <- gsub("%", "", induction$`%vote`)
+induction$`%vote` <- as.numeric(induction$`%vote`)
+induction <- induction %>% mutate(
+  yearID = 2025,
+  inducted = ifelse(`%vote` >= 75.0, "Y", "N")
+)
+
+induction$Name <- gsub("X-", "", induction$Name)
+
+induction %>% 
+  ggplot(aes(x = yearID, fill = inducted)) +
+  geom_bar() +
+  xlim(c(1936, 2025))
+```
+Notes:
+- Forgot to put html in quotes
+- Looks like the top row is the names of the col and the current names are unneeded higher order groups
+- Need the year in order to append
+- Do to batting and pitching we have duplicate names
+- X- is before some names
