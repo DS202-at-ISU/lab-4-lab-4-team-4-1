@@ -9,3 +9,96 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(rvest)
+library(dplyr)
+
+
+url <- "https://www.baseball-reference.com/awards/hof_2025.shtml"
+
+html <- read_html(url)
+
+
+tables <- html %>% html_table(fill=TRUE)
+
+
+length(tables)
+
+#first table
+hof_2025_raw <- tables[[1]]
+
+head(hof_2025_raw)
+
+
+```
+
+```{r}
+
+
+
+# Load required packages
+library(tidyverse)
+library(rvest)
+library(Lahman)
+
+# Step 1: Scrape HOF 2025 BBWAA Ballot
+url <- "https://www.baseball-reference.com/awards/hof_2025.shtml"
+html <- read_html(url)
+tables <- html %>% html_table(fill = TRUE)
+
+bbwaa2025 <- tables[[1]]  # Assuming the BBWAA ballot is the first table
+
+bbwaa2025 <- bbwaa2025 %>%
+  rename(
+    `First Lastname` = Name,
+    votes = Votes
+  )
+
+
+# Step 3: Get `playerID` from Lahman's People table
+People_needed_info <- People %>%
+  mutate(`First Lastname` = paste(str_replace(nameFirst, "\\. ", "."), nameLast)) %>%
+  select(playerID, `First Lastname`)
+
+# Step 4: Join on full name
+bbwaa2025 <- bbwaa2025 %>%
+  left_join(People_needed_info, by = "First Lastname")
+
+# Step 5: Clean and match HallOfFame structure
+# Ballots and needed derived from top of Baseball-Reference page or estimated
+ballots_2025 <- 385  # Manually checked from page or calculated
+needed_2025 <- ceiling(0.75 * ballots_2025)
+
+bbwaa2025_clean <- bbwaa2025 %>%
+  mutate(
+    yearID = 2025,
+    votedBy = "BBWAA",
+    ballots = ballots_2025,
+    needed = needed_2025,
+    inducted = if_else(votes >= needed, "Y", "N"),
+    category = "Player",
+    needed_note = NA
+  ) %>%
+  select(colnames(HallOfFame))
+
+# Check result
+head(bbwaa2025_clean)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
