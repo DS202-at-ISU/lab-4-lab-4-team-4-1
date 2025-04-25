@@ -29,64 +29,80 @@ hof_2025_raw <- tables[[1]]
 
 head(hof_2025_raw)
 
-
+head(tables[[1]], 3)
 ```
 
 ```{r}
 
+data <- tables[[1]]
+actual_col_names <- data[1, ]
+colnames(data) <- actual_col_names
+data <- data[-1, ]
+head(data, 3)
 
+data$Votes <- as.numeric(data$Votes)
+data$Votes
 
-# Load required packages
-library(tidyverse)
 library(rvest)
+library(dplyr)
+library(readr)
+library(tidyr)
 library(Lahman)
 
-# Step 1: Scrape HOF 2025 BBWAA Ballot
 url <- "https://www.baseball-reference.com/awards/hof_2025.shtml"
 html <- read_html(url)
-tables <- html %>% html_table(fill = TRUE)
+tables <- html_table(html, fill = TRUE)
+raw_data <- tables[[1]]
 
-bbwaa2025 <- tables[[1]]  # Assuming the BBWAA ballot is the first table
+actual_colnames <- as.character(unlist(raw_data[1, ]))
+colnames(raw_data) <- make.names(actual_colnames, unique = TRUE)
+data <- raw_data[-1, ]
 
-bbwaa2025 <- bbwaa2025 %>%
-  rename(
-    `First Lastname` = Name,
-    votes = Votes
+data_cleaned <- data %>%
+  mutate(
+    Votes = parse_number(Votes),
+    Percent = parse_number(X.vote)
+  ) %>%
+  mutate(
+    ballots = sum(Votes, na.rm = TRUE),
+    needed = ceiling(0.75 * ballots),
+    inducted = ifelse(Percent >= 75, "Y", "N")
+  ) %>%
+  separate(Name, into = c("firstName", "lastName"), sep = " ", extra = "merge") %>%
+  left_join(
+    People %>% select(playerID, nameFirst, nameLast),
+    by = c("firstName" = "nameFirst", "lastName" = "nameLast")
   )
 
-
-# Step 3: Get `playerID` from Lahman's People table
-People_needed_info <- People %>%
-  mutate(`First Lastname` = paste(str_replace(nameFirst, "\\. ", "."), nameLast)) %>%
-  select(playerID, `First Lastname`)
-
-# Step 4: Join on full name
-bbwaa2025 <- bbwaa2025 %>%
-  left_join(People_needed_info, by = "First Lastname")
-
-# Step 5: Clean and match HallOfFame structure
-# Ballots and needed derived from top of Baseball-Reference page or estimated
-ballots_2025 <- 385  # Manually checked from page or calculated
-needed_2025 <- ceiling(0.75 * ballots_2025)
-
-bbwaa2025_clean <- bbwaa2025 %>%
+final_cleaned <- data_cleaned %>%
   mutate(
-    yearID = 2025,
     votedBy = "BBWAA",
-    ballots = ballots_2025,
-    needed = needed_2025,
-    inducted = if_else(votes >= needed, "Y", "N"),
+    yearID = 2025,
     category = "Player",
-    needed_note = NA
+    needed_note = NA_character_
   ) %>%
-  select(colnames(HallOfFame))
+  select(
+    playerID, yearID, votedBy, ballots, needed,
+    votes = Votes, inducted, category, needed_note
+  )
 
-# Check result
-head(bbwaa2025_clean)
+head(final_cleaned)
+
+```
+```{r}
+
+library(tidyverse)
+library(Lahman)
+
+# View the original HallOfFame data
+head(HallOfFame)
+
+
+
+
 
 
 ```
-
 
 
 
