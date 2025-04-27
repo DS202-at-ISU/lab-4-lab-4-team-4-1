@@ -49,6 +49,7 @@ library(readr)
 library(tidyr)
 library(Lahman)
 
+
 url <- "https://www.baseball-reference.com/awards/hof_2025.shtml"
 html <- read_html(url)
 tables <- html_table(html, fill = TRUE)
@@ -91,15 +92,24 @@ head(final_cleaned)
 ```
 ```{r}
 
-library(tidyverse)
-library(Lahman)
-
-# View the original HallOfFame data
-head(HallOfFame)
 
 
+data("HallOfFame", package = "Lahman")
+head(HallOfFame, 3)
+
+# had to make sure the hall of fame would load in my data
 
 
+library(dplyr)
+
+HallOfFame_updated <- bind_rows(HallOfFame, final_cleaned)
+
+library(ggplot2)
+
+HallOfFame_updated %>% 
+  ggplot(aes(x = yearID, fill = inducted)) +
+  geom_bar() +
+  xlim(c(1936, 2025))
 
 
 ```
