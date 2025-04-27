@@ -1,0 +1,48 @@
+---
+title: "Progress Report"
+author: "Aden Koziol"
+date: "4/24/2045"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(rvest)
+library(dplyr)
+
+url <- "https://www.baseball-reference.com/awards/hof_2025.shtml"
+webpage <- read_html(url)
+
+tables <- webpage %>%
+  html_nodes("table") %>%
+  html_table(fill = TRUE)
+
+HallOfFame <- tables[[1]]
+
+names(HallOfFame) <- ifelse(
+  names(HallOfFame) == "" | is.na(names(HallOfFame)),
+  paste0("V", seq_along(HallOfFame)),
+  make.unique(names(HallOfFame))
+)
+
+HallOfFame <- HallOfFame %>%
+  filter(!is.na(.[[1]]))
+
+print(head(HallOfFame))
+
+names(HallOfFame)
+
+write.csv(HallOfFame, "hof_2025_voting_results.csv", row.names = FALSE)
+```
+
+```{r}
+library(ggplot2)
+
+HallOfFame %>% 
+  ggplot(aes(x = yearID, fill = inducted)) +
+  geom_bar() +
+  xlim(c(1936, 2024))
+```
