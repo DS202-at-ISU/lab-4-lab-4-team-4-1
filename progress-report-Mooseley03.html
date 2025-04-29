@@ -442,7 +442,7 @@ head(hof_all)</code></pre>
 ## 5 abreubo01   2022   BBWAA     394    296    34        N   Player        &lt;NA&gt;
 ## 6 abreubo01   2023   BBWAA     389    292    60        N   Player        &lt;NA&gt;</code></pre>
 <pre class="r"><code># save dataset
-# readr::write_csv(hof_all, file = &quot;hof_all_2025.csv&quot;)</code></pre>
+write.csv(hof_all, file=&quot;HallOfFame.csv&quot;, row.names = FALSE)</code></pre>
 <pre class="r"><code># plot data
 hof_all %&gt;%
   ggplot(aes(x = yearID, fill = inducted)) +
